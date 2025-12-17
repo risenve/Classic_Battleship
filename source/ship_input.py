@@ -48,7 +48,10 @@ def get_player_ships():
                 occupied.add(cell)
             ship_id += 1
             break
+    save_ships_to_csv("data/player_ships.csv", ships)
+    print("\nAll ships placed successfully!")   
 
-save_ships_to_csv("data/player_ships.csv", ships)
-print("\nAll ships placed successfully!")
+    
+
+
 
