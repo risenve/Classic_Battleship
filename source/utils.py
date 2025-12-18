@@ -1,71 +1,54 @@
 import csv
 
-board_size = 10 
-empty = "."
-hit = "X"
-miss = "O"
+BOARD_SIZE = 10
+EMPTY = "."
+HIT = "X"
+MISS = "O"
+
 
 def is_in_bounds(r, c):
-    if r<0 or r>= board_size:
-        return False
-    if c<0 or c>= board_size:
-        return False
-    return True
+    return 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE
+
 
 def get_neighbors(r, c):
-    neighbord = []
-    # 4 directions: up, down, left, right
+    neighbors = []
     for dr in [-1, 0, 1]:
         for dc in [-1, 0, 1]:
-            if abs(dr) + abs(dc) != 1: # skip diagonals and self cell
+            if abs(dr) + abs(dc) != 1:
                 continue
-            nr = r + dr
-            nc = c + dc
-
+            nr, nc = r + dr, c + dc
             if is_in_bounds(nr, nc):
-                neighbord.append((nr, nc))
-    return neighbord
+                neighbors.append((nr, nc))
+    return neighbors
 
-def create_empty_board ():
-    board = []
-    for r in range(board_size):
-        row = []
-        for c in range(board_size):
-            row.append(empty)
-        board.append(row)
-    return board
+
+def create_empty_board():
+    return [[EMPTY for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
+
 
 def print_board(board, title=""):
     if title:
         print(title)
-    header = "  " + " ".join([str(c) for c in range(board_size)])
-    print(header)
-    for r in range(board_size):
-        row_str = str(r) + " " + " ".join(board[r])
-        print(row_str)
+    print("  " + " ".join(str(i) for i in range(BOARD_SIZE)))
+    for i, row in enumerate(board):
+        print(i, " ".join(row))
+
 
 def save_ships_to_csv(filepath, ships):
-    with open(filepath, mode="w", newline="") as f:
+    with open(filepath, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["ship_id", "row", "col"])
-
-        for ship_id in ships:
-            for cell in ships[ship_id]:
-                writer.writerow([ship_id, cell[0], cell[1]])
+        for ship_id, cells in ships.items():
+            for r, c in cells:
+                writer.writerow([ship_id, r, c])
 
 
 def load_ships_from_csv(filepath):
     ships = {}
-    
     with open(filepath, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             ship_id = int(row["ship_id"])
-            r = int(row["row"])
-            c = int(row["col"])
-
-            if ship_id not in ships:
-                ships[ship_id] = []
-            
-            ships[ship_id].append((r, c))
+            cell = (int(row["row"]), int(row["col"]))
+            ships.setdefault(ship_id, []).append(cell)
     return ships
