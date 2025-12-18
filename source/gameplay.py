@@ -92,3 +92,51 @@ def bot_turn(player_ships, bot_board, bot_hits):
     bot_board[r][c] = miss
     return (r,c), "miss"
 
+def game():
+    player_ships = load_ships_from_csv("data/player_ships.csv")
+    bot_ships = load_ships_from_csv("data/bot_ships.csv")
+
+    player_board = create_empty_board()
+    bot_board = create_empty_board()
+
+    player_hits = set()
+    bot_hits = set()
+
+    turn = 1
+
+    print("__________ Game Start! __________")
+
+    with open("data/gameplay_log.csv", mode="w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "turn",
+            "player_move",
+            "player_result",
+            "bot_move",
+            "bot_result"
+        ])
+
+        while True:
+            print(f"\n____ Turn {turn} ____\n")
+            print_board(player_board, "Your Board:")
+            print_board(bot_board, "Bot's Board:")
+
+            player_move, player_result = player_turn(bot_ships, bot_board, player_hits)
+            if all_ship_destroyed(bot_ships, player_hits):
+                print("Congratulations! You won! AI will never replace you")
+                break
+
+            bot_move, bot_result = bot_turn(player_ships, player_board, bot_hits)
+            if all_ship_destroyed(player_ships, bot_hits):
+                print("Bot wins! You'll lose your job because of AI.")
+                break
+
+            writer.writerow([
+                turn,
+                f"{player_move[0]}-{player_move[1]}",
+                player_result,
+                f"{bot_move[0]}-{bot_move[1]}",
+                bot_result
+            ])
+
+            turn += 1
