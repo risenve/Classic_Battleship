@@ -5,90 +5,87 @@ from .utils import (
     print_board,
     load_ships_from_csv,
     get_neighbors,
-    hit,
-    miss,
-    empty
+    HIT,
+    MISS,
+    EMPTY
 )
 
+
 def mark_surroundings(ship_cells, board):
-    for cell in ship_cells:
-       r = cell[0]
-       c = cell[1]
-       neighbors = get_neighbors(r, c)
-       for n in neighbors:
-           nr = n[0]
-           nc = n[1]
-           if board[nr][nc] == empty:
-               board[nr][nc] = miss
+    for r, c in ship_cells:
+        for nr, nc in get_neighbors(r, c):
+            if board[nr][nc] == EMPTY:
+                board[nr][nc] = MISS
+
 
 def is_ship_destroyed(ship_cells, board):
     for r, c in ship_cells:
-        if board[r][c] != hit:
+        if board[r][c] != HIT:
             return False
     return True
 
-def all_ship_destroyed(ships, hits):
+
+def all_ships_destroyed(ships, board):
     for ship_id in ships:
-        if not is_ship_destroyed(ships[ship_id], hits):
+        if not is_ship_destroyed(ships[ship_id], board):
             return False
     return True
-    
-def player_turn(bot_ships, player_board, player_hits):
+
+
+def player_turn(bot_ships, board):
     while True:
-        move = input("Enter your move (row-col): ")
-        # parse_input
+        move = input("Your move (row-col): ")
+
         try:
             r, c = map(int, move.split("-"))
         except:
-            print("Invalid input format. Use row-col format.")
+            print("Invalid input format. Use row-col.")
             continue
 
-        if r < 0 or r > 9 or c < 0 or c > 9:
-            print("Move out of bounds. Try again.")
+        if not (0 <= r < 10 and 0 <= c < 10):
+            print("Move out of bounds.")
             continue
 
-        if player_board[r][c] != empty:
-            print("You already attacked this cell. Try again.")
+        if board[r][c] != EMPTY:
+            print("You already attacked this cell.")
             continue
 
-        for ship_id in bot_ships:
-            if (r, c) in bot_ships[ship_id]:
-                print("It's a hit!")
-                player_board[r][c] = hit
-                player_hits.add((r, c))
+        for cells in bot_ships.values():
+            if (r, c) in cells:
+                print("Hit!")
+                board[r][c] = HIT
+                if is_ship_destroyed(cells, board):
+                    print("Ship destroyed.")
+                    mark_surroundings(cells, board)
+                return (r, c), "HIT"
 
-                if is_ship_destroyed(bot_ships[ship_id], player_hits):
-                    print("You destroyed a ship!")
-                    mark_surroundings(bot_ships[ship_id], player_board)
-                break
-    print("Failed to hit. It's a miss.")
-    player_board[r][c] = miss
-    return (r,c), "miss"
+        print("Miss.")
+        board[r][c] = MISS
+        return (r, c), "MISS"
 
-def bot_turn(player_ships, bot_board, bot_hits):
+
+def bot_turn(player_ships, board):
     while True:
         r = random.randint(0, 9)
         c = random.randint(0, 9)
-
-        if bot_board[r][c] == empty:
+        if board[r][c] == EMPTY:
             break
 
-    print(f"Bot attacks cell: {r}-{c}")
+    print(f"Bot attacks cell {r}-{c}.")
 
-    for ship_id in player_ships:
-        if (r, c) in player_ships[ship_id]:
-            print("Bot hit your ship!")
-            bot_board[r][c] = hit
-            bot_hits.add((r, c))
+    for cells in player_ships.values():
+        if (r, c) in cells:
+            print("Bot hit your ship.")
+            board[r][c] = HIT
+            if is_ship_destroyed(cells, board):
+                print("Bot destroyed one of your ships.")
+                mark_surroundings(cells, board)
+            return (r, c), "HIT"
 
-            if is_ship_destroyed(player_ships[ship_id], bot_hits):
-                print("Bot destroyed one of your ships!")
-                mark_surroundings(player_ships[ship_id], bot_board)
-            break
-    
     print("Bot missed.")
-    bot_board[r][c] = miss
-    return (r,c), "miss"
+    board[r][c] = MISS
+    return (r, c), "MISS"
+
 
 def game():
     player_ships = load_ships_from_csv("data/player_ships.csv")
@@ -97,44 +94,27 @@ def game():
     player_board = create_empty_board()
     bot_board = create_empty_board()
 
-    player_hits = set()
-    bot_hits = set()
+    print("========== Game started ==========")
 
     turn = 1
-
-    print("__________ Game Start! __________")
-
-    with open("data/gameplay_log.csv", mode="w", newline="") as f:
+    with open("data/gameplay_log.csv", "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "turn",
-            "player_move",
-            "player_result",
-            "bot_move",
-            "bot_result"
-        ])
+        writer.writerow(["turn", "player_move", "player_result", "bot_move", "bot_result"])
 
         while True:
-            print(f"\n____ Turn {turn} ____\n")
-            print_board(player_board, "Your Board:")
-            print_board(bot_board, "Bot's Board:")
+            print(f"\n--- Turn {turn} ---\n")
+            print_board(player_board, "Your board:")
+            print_board(bot_board, "Bot board:")
 
-            player_move, player_result = player_turn(bot_ships, bot_board, player_hits)
-            if all_ship_destroyed(bot_ships, player_hits):
-                print("Congratulations! You won! AI will never replace you")
+            pm, pr = player_turn(bot_ships, bot_board)
+            if all_ships_destroyed(bot_ships, bot_board):
+                print("\nYou win. All enemy ships destroyed.")
                 break
 
-            bot_move, bot_result = bot_turn(player_ships, player_board, bot_hits)
-            if all_ship_destroyed(player_ships, bot_hits):
-                print("Bot wins! You'll lose your job because of AI.")
+            bm, br = bot_turn(player_ships, player_board)
+            if all_ships_destroyed(player_ships, player_board):
+                print("\nYou lose. All your ships are destroyed.")
                 break
 
-            writer.writerow([
-                turn,
-                f"{player_move[0]}-{player_move[1]}",
-                player_result,
-                f"{bot_move[0]}-{bot_move[1]}",
-                bot_result
-            ])
-
+            writer.writerow([turn, f"{pm[0]}-{pm[1]}", pr, f"{bm[0]}-{bm[1]}", br])
             turn += 1
