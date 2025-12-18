@@ -1,24 +1,20 @@
 import random
 from .utils import is_in_bounds, get_neighbors, save_ships_to_csv
+
 ship_sizes = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
-def can_place(cells, occupied):
-    for cell in cells:
-        r = cell[0]
-        c = cell[1]
 
+def can_place(cells, occupied):
+    for r, c in cells:
         if not is_in_bounds(r, c):
             return False
-
-        if cell in occupied:
+        if (r, c) in occupied:
             return False
-
-        neighbors = get_neighbors(r, c)
-        for n in neighbors:
+        for n in get_neighbors(r, c):
             if n in occupied:
                 return False
-
     return True
+
 
 def generate_bot_ships():
     ships = {}
@@ -27,14 +23,12 @@ def generate_bot_ships():
 
     for size in ship_sizes:
         placed = False
-
         while not placed:
             r = random.randint(0, 9)
             c = random.randint(0, 9)
-            orientation = random.randint(0, 1)  # 0 - horizontal, 1 - vertical
+            orientation = random.randint(0, 1)
 
             cells = []
-
             for i in range(size):
                 if orientation == 0:
                     cells.append((r, c + i))
@@ -49,4 +43,4 @@ def generate_bot_ships():
                 placed = True
 
     save_ships_to_csv("data/bot_ships.csv", ships)
-    print("Bot ships generated successfully!")
+    print("Bot ships generated successfully.")
