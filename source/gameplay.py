@@ -1,6 +1,6 @@
 import csv
 import random
-from utils import (
+from .utils import (
     create_empty_board,
     print_board,
     load_ships_from_csv,
@@ -22,9 +22,7 @@ def mark_surroundings(ship_cells, board):
                board[nr][nc] = miss
 
 def is_ship_destroyed(ship_cells, board):
-    for cell in ship_cells:
-        r = cell[0]
-        c = cell[1]
+    for r, c in ship_cells:
         if board[r][c] != hit:
             return False
     return True

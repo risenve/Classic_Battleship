@@ -57,7 +57,7 @@ def save_ships_to_csv(filepath, ships):
 def load_ships_from_csv(filepath):
     ships = {}
     
-    with open(filepath, newLine="") as f:
+    with open(filepath, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             ship_id = int(row["ship_id"])

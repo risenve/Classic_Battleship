@@ -1,5 +1,5 @@
 import random
-from utils import is_inside, get_neighbors, save_ships_to_csv
+from .utils import is_in_bounds, get_neighbors, save_ships_to_csv
 ship_sizes = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
 def can_place(cells, occupied):
@@ -7,7 +7,7 @@ def can_place(cells, occupied):
         r = cell[0]
         c = cell[1]
 
-        if not is_inside(r, c):
+        if not is_in_bounds(r, c):
             return False
 
         if cell in occupied:
